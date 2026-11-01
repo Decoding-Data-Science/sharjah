@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# API credentials and local settings
+.env
+.env.*
+!.env.example
+*.key
+credentials.json
+service-account*.json
+
+# Editors and OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Temporary generated files
+*.log
+tmp/
+temp/
