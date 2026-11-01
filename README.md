@@ -1,7 +1,7 @@
 # Data & AI with Gemini | Sharjah Workshop
 
 **Three-day, hands-on AI workshop · 2–4 November 2026**  
-**By [Decoding Data Science](https://decodingdatascience.com)**
+**Website (https://decoding-data-science.github.io/sharjah/)**
 
 A practical introduction to **data analytics, generative AI, document understanding, and AI-assisted workflows** using **Google Colab and the Gemini API**. The exercises follow a fictional airport operations case study known as **“The Friday Problem.”**
 
