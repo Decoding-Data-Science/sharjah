@@ -24,6 +24,16 @@ A practical introduction to **data analytics, generative AI, document understand
 5. Work through the Day 1 notebooks in numerical order. Open each `.ipynb` in Colab and follow its setup cells.
 6. Use the fictional [airport data](data/) and [document register](data/documents/Document_Register.md) for exercises.
 
+## Restore the airport database
+
+The synthetic SQLite database is included as eight compressed parts under [data/database/](data/database/). After cloning or downloading the repository, restore the original `airport_ops.db` by running:
+
+```bash
+python data/database/restore_database.py
+```
+
+The script checks the database integrity before writing it. The [Excel workbook with 11 worksheets](data/Airport_Copilot_Workbook.xlsx) is available directly, without any restoration step. See the [database README](data/database/README.md) for details.
+
 ## Repository structure
 
 ```text
@@ -48,7 +58,7 @@ sharjah/
 │   └── workshop_agent.py
 ├── data/
 │   ├── database/
-│   │   ├── airport_ops.db
+│   │   ├── airport_ops.db                # Rebuild with restore_database.py
 │   │   └── Data_Dictionary.md
 │   └── documents/                   # Fictional policy documents in TXT/PDF
 ├── slides/                           # Day 1 presentations
