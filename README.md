@@ -3,6 +3,15 @@
 **Three-day, hands-on AI workshop · 2–4 November 2026**  
 **Website (https://decoding-data-science.github.io/sharjah/)**
 
+
+**Individual assessments**
+
+https://forms.gle/SLs9ksmtvqWjK6276
+
+**Team Assessments**
+
+https://forms.gle/6H2JCU8csY4DG7Mm7
+
 A practical introduction to **data analytics, generative AI, document understanding, and AI-assisted workflows** using **Google Colab and the Gemini API**. The exercises follow a fictional airport operations case study known as **“The Friday Problem.”**
 
 > **Workshop safety:** All sample data and policies are fictional. Do not upload real passenger, employee, organizational, or otherwise confidential information to AI tools. Store API keys in Google Colab Secrets—not in code or this repository.
