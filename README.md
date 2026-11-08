@@ -3,6 +3,7 @@
 **Three-day, hands-on AI workshop · 2–4 November 2026**  
 **Website (https://decoding-data-science.github.io/sharjah/)**
 
+https://decoding-data-science.github.io/sharjah/prompt-engineering-guide.html#five
 
 **Individual assessments**
 
