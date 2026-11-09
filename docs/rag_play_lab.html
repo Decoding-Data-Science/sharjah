@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAG Play Lab: Airport Policy Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#05080D;--panel:#0A111B;--line:#1F3346;--ice:#9FD6FF;--amb:#FFB454;--grn:#3DDC84;--red:#FF5A6E;--ink:#EEF4FA;--mute:#93A7BB;--d0:#4FB3FF;--d1:#C792EA;--d2:#FF8A65}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:Rajdhani,Arial,sans-serif;font-size:16px;min-height:100vh;
+  background-image:radial-gradient(900px 500px at 80% -10%,rgba(79,179,255,.10),transparent 60%),radial-gradient(700px 400px at 0% 110%,rgba(255,180,84,.06),transparent 60%),
+  linear-gradient(rgba(159,214,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(159,214,255,.035) 1px,transparent 1px);background-size:auto,auto,48px 48px,48px 48px}
+.mono{font-family:'JetBrains Mono',Consolas,monospace}
+header{display:flex;justify-content:space-between;align-items:flex-end;padding:22px 28px 10px;gap:20px;flex-wrap:wrap}
+.kicker{font-family:Orbitron,Arial,sans-serif;font-size:11px;letter-spacing:.3em;color:var(--ice)}
+h1{font-family:Orbitron,Arial,sans-serif;font-weight:800;font-size:clamp(22px,2.6vw,34px);letter-spacing:.02em;margin-top:6px}
+h1 span{color:var(--ice)}
+.sub{color:var(--mute);font-size:17px;margin-top:4px;max-width:760px}
+/* pipeline */
+.pipe{display:flex;gap:6px;align-items:center;padding:6px 28px 16px;flex-wrap:wrap}
+.stage{display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid var(--line);border-radius:4px;background:rgba(10,17,27,.8);font-weight:700;color:var(--mute);transition:all .35s}
+.stage b{font-family:Orbitron,Arial,sans-serif;font-size:10px;color:var(--ice);letter-spacing:.12em}
+.stage.on{color:var(--ink);border-color:var(--ice);box-shadow:0 0 18px rgba(159,214,255,.25)}
+.arrow{color:#3A5570}
+main{display:grid;grid-template-columns:320px 1fr 1fr;gap:16px;padding:0 28px 28px}
+@media (max-width:1250px){main{grid-template-columns:1fr 1fr}.col1{grid-column:1/-1}}
+@media (max-width:820px){main{grid-template-columns:1fr}}
+.card{background:linear-gradient(180deg,rgba(12,20,32,.92),rgba(8,13,21,.92));border:1px solid var(--line);border-radius:6px;padding:16px 16px 14px;position:relative}
+.card + .card{margin-top:16px}
+.card h2{font-family:Orbitron,Arial,sans-serif;font-size:12px;letter-spacing:.22em;color:var(--ice);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.card h2 small{font-family:Rajdhani,Arial,sans-serif;letter-spacing:.02em;font-size:14px;color:var(--mute);font-weight:600}
+label.row{display:flex;align-items:center;gap:10px;margin:7px 0;cursor:pointer;font-weight:600}
+input[type=checkbox]{accent-color:var(--ice);width:16px;height:16px}
+.sw{width:10px;height:10px;border-radius:2px;display:inline-block}
+.slider{margin:14px 0 4px}
+.slider .top{display:flex;justify-content:space-between;font-weight:700}
+.slider .val{font-family:Orbitron,Arial,sans-serif;color:var(--amb);font-size:14px}
+.slider .hint{color:var(--mute);font-size:13.5px;margin-top:2px}
+input[type=range]{width:100%;accent-color:var(--ice);margin-top:6px}
+.seg{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-top:6px}
+.seg button{flex:1;background:transparent;border:0;color:var(--mute);padding:8px 6px;font-family:Rajdhani,Arial,sans-serif;font-weight:700;font-size:15px;cursor:pointer}
+.seg button.on{background:rgba(159,214,255,.16);color:var(--ink)}
+.ask{display:flex;gap:8px}
+.ask input{flex:1;background:#060B12;border:1px solid var(--line);border-radius:4px;color:var(--ink);padding:11px 12px;font-family:Rajdhani,Arial,sans-serif;font-size:17px;font-weight:600;outline:none}
+.ask input:focus{border-color:var(--ice)}
+.btn{background:var(--ice);color:#04101E;border:0;border-radius:4px;padding:10px 16px;font-family:Rajdhani,Arial,sans-serif;font-weight:700;font-size:16px;cursor:pointer;letter-spacing:.04em}
+.btn:hover{background:#c6e8ff}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{border:1px solid var(--line);background:rgba(159,214,255,.05);color:var(--ink);border-radius:14px;padding:5px 11px;font-size:14px;font-weight:600;cursor:pointer;font-family:Rajdhani,Arial,sans-serif}
+.chip:hover{border-color:var(--ice)}
+/* chunk map */
+.map{display:flex;flex-wrap:wrap;gap:5px}
+.tile{width:30px;height:30px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:Orbitron,Arial,sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,.75);
+  background:rgba(255,255,255,.04);border:1px solid;cursor:default;transition:all .4s;position:relative}
+.tile.hit{color:#04101E;transform:translateY(-3px);box-shadow:0 0 14px currentColor}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;color:var(--mute);font-size:14px;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stat{border:1px solid var(--line);border-radius:4px;padding:8px 10px}
+.stat b{display:block;font-family:Orbitron,Arial,sans-serif;font-size:20px;color:var(--ink)}
+.stat span{color:var(--mute);font-size:13px;font-weight:600}
+/* results */
+.res{border:1px solid var(--line);border-radius:4px;padding:10px 12px;margin-bottom:9px;background:rgba(5,9,15,.7);animation:in .45s ease-out both}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.res .meta{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px;margin-bottom:6px;gap:8px}
+.rank{font-family:Orbitron,Arial,sans-serif;font-size:11px;padding:2px 7px;border-radius:3px;color:#04101E}
+.bar{height:5px;background:rgba(159,214,255,.1);border-radius:3px;margin:4px 0 8px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ice),var(--grn));transition:width .6s}
+.txt{font-size:14.5px;line-height:1.45;color:#C9D6E3;max-height:150px;overflow:auto}
+.txt mark{background:rgba(61,220,132,.22);color:#fff;border-radius:2px;padding:0 1px}
+.txt .ov{background:rgba(255,180,84,.18);border-bottom:1px dashed var(--amb)}
+.miss{opacity:.45}
+.prompt{font-family:'JetBrains Mono',Consolas,monospace;font-size:12px;line-height:1.5;background:#03060A;border:1px solid var(--line);border-radius:4px;padding:10px;max-height:190px;overflow:auto;color:#A9BCCF;white-space:pre-wrap}
+.prompt .k{color:var(--amb)}
+.answer{font-size:18px;line-height:1.45;font-weight:600;padding:12px 14px;border-radius:4px;border-left:4px solid var(--grn);background:rgba(61,220,132,.06)}
+.answer.no{border-left-color:var(--amb);background:rgba(255,180,84,.07)}
+.answer.risk{border-left-color:var(--red);background:rgba(255,90,110,.08)}
+.answer .src{display:block;font-size:14px;color:var(--mute);margin-top:6px;font-weight:600}
+.note{font-size:13.5px;color:var(--mute);margin-top:8px}
+.warn{color:var(--red);font-weight:700}
+/* experiments */
+.exp{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid rgba(159,214,255,.08)}
+.exp:first-of-type{border-top:0}
+.exp .n{font-family:Orbitron,Arial,sans-serif;font-size:11px;color:var(--amb);min-width:22px;margin-top:3px}
+.exp p{font-size:15px;line-height:1.35}
+.exp p em{color:var(--mute);font-style:normal;display:block;font-size:14px;margin-top:2px}
+.exp button{margin-left:auto;flex:none;background:transparent;border:1px solid var(--line);color:var(--ice);border-radius:3px;padding:4px 9px;font-family:Rajdhani,Arial,sans-serif;font-weight:700;cursor:pointer}
+.exp button:hover{border-color:var(--ice)}
+.empty{color:var(--mute);font-size:15px;padding:14px 4px}
+footer{padding:4px 28px 18px;color:#5C7085;font-size:12px;font-family:'JetBrains Mono',Consolas,monospace;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="kicker">CORPORATE WORKSHOP · DAY 2 / 3 · HANDS-ON</div>
+    <h1>RAG Play Lab: <span>ask the airport documents</span></h1>
+    <div class="sub">Change the settings, ask a question, and watch what the search finds. The same steps run in your Colab notebook, with Gemini writing the final answer.</div>
+  </div>
+</header>
+
+<div class="pipe" id="pipe">
+  <div class="stage" data-s="0"><b>1</b>Documents</div><span class="arrow">›</span>
+  <div class="stage" data-s="1"><b>2</b>Chunk</div><span class="arrow">›</span>
+  <div class="stage" data-s="2"><b>3</b>Embed</div><span class="arrow">›</span>
+  <div class="stage" data-s="3"><b>4</b>Search top-k</div><span class="arrow">›</span>
+  <div class="stage" data-s="4"><b>5</b>Prompt</div><span class="arrow">›</span>
+  <div class="stage" data-s="5"><b>6</b>Answer + sources</div>
+</div>
+
+<main>
+  <section class="col1">
+    <div class="card">
+      <h2>1 · DOCUMENTS</h2>
+      <div id="docList"></div>
+    </div>
+    <div class="card">
+      <h2>2 · SETTINGS</h2>
+      <div class="slider"><div class="top"><span>chunk_size</span><span class="val" id="vSize"></span></div>
+        <input type="range" id="size" min="0" max="5" step="1" value="3"><div class="hint" id="hSize"></div></div>
+      <div class="slider"><div class="top"><span>chunk_overlap</span><span class="val" id="vOv"></span></div>
+        <input type="range" id="ov" min="0" max="60" step="10" value="30"><div class="hint">Words repeated at each border, so a rule is not cut in half.</div></div>
+      <div class="slider"><div class="top"><span>similarity_top_k</span><span class="val" id="vK"></span></div>
+        <input type="range" id="k" min="1" max="6" step="1" value="3"><div class="hint">How many chunks the model is allowed to read.</div></div>
+      <div class="slider"><div class="top"><span>Search by</span></div>
+        <div class="seg" id="mode"><button data-m="meaning" class="on">Meaning (embeddings)</button><button data-m="keyword">Keywords (Ctrl+F)</button></div></div>
+      <div class="slider"><div class="top"><span>Rule prompt</span></div>
+        <div class="seg" id="rule"><button data-r="1" class="on">On: say "not found"</button><button data-r="0">Off</button></div>
+        <div class="hint">"Answer only from the context. If it is not there, say I could not find this in the documents."</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <h2>ASK A QUESTION</h2>
+      <div class="ask"><input id="q" placeholder="Type a question about the airport policies..." value="How many counters must be open in Terminal 1 at peak hours?"><button class="btn" id="go">Ask</button></div>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="card">
+      <h2>CHUNK MAP <small id="mapInfo"></small></h2>
+      <div class="map" id="map"></div>
+      <div class="legend" id="legend"></div>
+      <div class="stats">
+        <div class="stat"><b id="sChunks">0</b><span>chunks in the vector store</span></div>
+        <div class="stat"><b id="sTok">0</b><span>tokens sent to the model</span></div>
+        <div class="stat"><b id="sAll">0</b><span>tokens if you pasted everything</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>TRY THESE EXPERIMENTS</h2>
+      <div id="exps"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <h2>4 · WHAT THE SEARCH FOUND <small id="foundInfo"></small></h2>
+      <div id="results"><div class="empty">Ask a question to see the top chunks.</div></div>
+    </div>
+    <div class="card">
+      <h2>5 · WHAT THE MODEL RECEIVES</h2>
+      <div class="prompt" id="prompt"></div>
+    </div>
+    <div class="card">
+      <h2>6 · ANSWER WITH SOURCES</h2>
+      <div id="answer" class="answer no">Waiting for a question.</div>
+      <div class="note">For the ready-made questions this page knows which clause holds the answer and checks whether it reached the model. In your notebook, Gemini writes the answer from exactly these chunks: if the right chunk is not here, Gemini cannot see it either.</div>
+    </div>
+  </section>
+</main>
+<footer><span>Corporate Workshop | Day 2 / 3</span><span>Fictional training documents · runs fully in your browser · no API key needed</span></footer>
+
+<script>
+const DOCS = [{"code": "GIA-POL-01", "label": "Passenger Service Standards Policy v3.0 (APPROVED)", "lines": ["GIA-POL-01 PASSENGER SERVICE STANDARDS POLICY (version 3.0, APPROVED)", "General International Airport (fictional) - Document GIA-POL-01, Version 3.0", "Status: APPROVED | Effective: 1 January 2026 | Next review: 1 January 2027", "Owner: Director, Passenger Experience | Approved by: Executive Committee (decision EC-2025-041, 9 December 2025)", "Supersedes: GIA-SUP-12 (Passenger Service Standards PSS-01 v2.0) | Classification: Internal", "Section 1. Purpose and scope", "1.1 This policy sets the minimum service levels that every passenger should experience at the airport, from arrival at the terminal to boarding or leaving.", "1.2 It applies to Terminal 1 and Terminal 2 and to the airport operator, border agencies working in the terminals, security contractors and ground handlers.", "1.3 Related documents: Counter Staffing and Roster Standard (GIA-STD-03), Peak-Period Operations and Queue Escalation SOP (GIA-SOP-06), Complaint Handling Procedure (GIA-SOP-05), KPI and Data Definitions Manual (GIA-MAN-08).", "Section 2. Processing time targets", "2.1 Departure check-in: the average wait must not exceed 10 minutes.", "2.2 Departure security screening: the average wait must not exceed 10 minutes.", "2.3 Departure immigration: the average wait must not exceed 15 minutes, and no more than 5 percent of departing passengers may wait longer than 30 minutes in any peak hour.", "2.4 Arrival immigration: the average wait must not exceed 15 minutes.", "2.5 Baggage reclaim: the average wait for baggage must not exceed 20 minutes.", "Section 3. Peak hours and immigration counters", "3.1 Peak hours are 17:00 to 22:59 every day of the week, in both terminals.", "3.2 During peak hours a minimum number of departure immigration counters must be open: 9 counters in Terminal 1 and 5 counters in Terminal 2. Minimums for other checkpoints are set in the Counter Staffing and Roster Standard.", "3.3 If the average departure immigration wait exceeds 30 minutes for 3 consecutive hours, the airport duty manager must request additional border staff immediately and record the incident, as set out in GIA-SOP-06.", "3.4 Counter rosters must be reviewed every month against the actual waiting times recorded. Any peak hour that failed the target in section 2.3 must be corrected in the next roster.", "3.5 A temporary exception to section 3.2 is allowed only through the exception process in section 5 of GIA-STD-03. An exception always has an expiry date.", "Section 4. Measurement", "4.1 Waiting times are measured from the passenger timing sample, which covers 4 percent of passengers.", "4.2 Compliance is assessed per terminal, per weekday and per hour band, aggregated over a calendar month.", "4.3 Sample counts are multiplied by 25 to estimate the number of passengers affected. Averages and percentages are not scaled.", "4.4 Passengers who use an automated smart gate are included in the average.", "Section 5. Passenger satisfaction", "5.1 The average satisfaction score must be at least 4.0 out of 5 in every survey category.", "5.2 Any category whose monthly average falls below 3.5 requires a written improvement plan within 14 days.", "5.3 A category is reported only when at least 30 responses exist for the period.", "Section 6. Missed flights", "6.1 If the share of departing passengers who miss their flight exceeds 1 percent in any peak hour band, an executive review of staffing and processes is mandatory.", "6.2 Airport-caused misses, where a queue longer than 45 minutes was the cause, must be reported to the Customer Experience Committee.", "6.3 Passengers affected receive rebooking assistance under section 4 of GIA-SOP-05.", "Section 7. Governance", "7.1 The Passenger Experience team publishes a monthly compliance report to the Customer Experience Committee by the 10th of the following month.", "7.2 This policy is reviewed once a year."]}, {"code": "GIA-SOP-06", "label": "Queue Escalation SOP v1.3 (APPROVED)", "lines": ["GIA-SOP-06 PEAK-PERIOD OPERATIONS AND QUEUE ESCALATION SOP (version 1.3, APPROVED)", "General International Airport (fictional) - Document GIA-SOP-06, Version 1.3", "Status: APPROVED | Effective: 1 March 2026 | Next review: 1 March 2027", "Owner: Director, Airport Operations | Approved by: Operations Board (decision OB-2026-004, 16 February 2026)", "Supersedes: Queue Escalation SOP v1.2 | Classification: Internal", "Section 1. Purpose", "1.1 This procedure tells the duty manager what to do when queues build up, so that no passenger waits longer than the service standards allow.", "Section 2. Escalation levels", "2.1 Level 1: the average departure immigration wait in the last hour is above 20 minutes. The duty manager opens any reserve counters in that terminal and informs the border supervisor.", "2.2 Level 2: the average departure immigration wait is above 30 minutes for 3 consecutive hours. The duty manager requests additional border staff immediately, records the incident, and notifies the Director, Airport Operations.", "2.3 Level 3: individual waits above 45 minutes. The duty manager activates priority lanes for passengers whose flight departs within 90 minutes, informs the airlines, and logs every passenger who misses a flight for rebooking assistance under GIA-SOP-05.", "Section 3. Reserve capacity", "3.1 Terminal 1 has 14 departure immigration counters installed and Terminal 2 has 9. Counters installed but not rostered are reserve capacity.", "3.2 Reserve capacity may be opened within 15 minutes of a Level 1 trigger if border staff are available.", "Section 4. Smart gates", "4.1 Automated smart gates operate at Terminal 1 departures from 1 July 2026. Use is voluntary and open to eligible resident and work permit holders.", "4.2 Smart gates reduce load on staffed counters but do not replace the minimum counters in GIA-STD-03.", "4.3 A smart gate outage longer than 30 minutes is recorded as an incident and the duty manager reviews the staffed counters.", "Section 5. Monitoring and reporting", "5.1 The control room reviews the sampled waiting times every hour in peak hours.", "5.2 Each Level 2 or Level 3 event is reported to the Customer Experience Committee in the monthly compliance report."]}, {"code": "GIA-DRAFT-11", "label": "Passenger Service Standards v4.0 (DRAFT, not in force)", "lines": ["GIA-DRAFT-11 PASSENGER SERVICE STANDARDS POLICY - DRAFT FOR CONSULTATION (version 4.0 (draft 0.4), DRAFT - NOT APPROVED, NOT IN FORCE)", "General International Airport (fictional) - Document GIA-DRAFT-11, Version 4.0 (draft 0.4)", "Status: DRAFT - NOT APPROVED, NOT IN FORCE | Effective: Proposed 1 January 2027, only if approved | Next review: Not applicable until approved", "Owner: Director, Passenger Experience | Approved by: Not yet approved. Planned for Executive Committee, December 2026", "Supersedes: Would supersede GIA-POL-01 v3.0 if approved | Classification: Internal - consultation draft", "Section 1. Status of this draft", "1.1 This document is a consultation draft. It is NOT approved and has NO effect. The rules in force are in GIA-POL-01 v3.0.", "1.2 Comments are due by 30 November 2026 to the Director, Passenger Experience.", "1.3 Every number in this draft is a proposal and may change.", "Section 2. Proposed changes to processing time targets", "2.1 Proposed: departure immigration average wait not to exceed 12 minutes (currently 15), and no more than 3 percent of departing passengers waiting longer than 30 minutes in any peak hour (currently 5 percent).", "2.2 Proposed: check-in and security averages not to exceed 8 minutes (currently 10).", "2.3 Proposed: arrival immigration average not to exceed 12 minutes (currently 15).", "Section 3. Proposed changes to peak hours and counters", "3.1 Proposed: on Fridays, peak hours start at 16:00 instead of 17:00.", "3.2 Proposed: minimum departure immigration counters in peak hours become 10 in Terminal 1 (currently 9) and 6 in Terminal 2 (currently 5).", "3.3 Proposed: no exception to a staffing minimum may last longer than 90 days.", "3.4 Proposed: smart gate users are reported separately from staffed counter users.", "Section 4. Proposed changes to satisfaction and missed flights", "4.1 Proposed: average satisfaction of at least 4.2 in every category (currently 4.0).", "4.2 Proposed: an executive review is triggered when more than 0.5 percent of departing passengers miss their flight in any peak hour band (currently 1 percent).", "4.3 Proposed pilot: a goodwill voucher of up to AED 150 for passengers who miss a flight because of an airport queue longer than 45 minutes. This would change section 4.1 of GIA-SOP-05, which today excludes cash compensation.", "Section 5. Consultation and timetable", "5.1 Consultation closes on 30 November 2026. The revised draft goes to the Executive Committee in December 2026.", "5.2 If approved, the policy takes effect on 1 January 2027. Until then GIA-POL-01 v3.0 applies."]}];
+</script>
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const SIZES = [50,100,200,300,450,600];
+const COLORS = ['var(--d0)','var(--d1)','var(--d2)'];
+const HEX = ['#4FB3FF','#C792EA','#FF8A65'];
+const S = {docs:[true,true,false], size:3, ov:30, k:3, mode:'meaning', rule:true, q:''};
+
+/* ---------- text tools ---------- */
+const STOP = new Set('a an the of to in on at for and or is are be been must not by with as from that this it its any every each which what when where who how many much do does did may can will per into than then there their they them our your you we i why so happens happen'.split(' '));
+// concept groups: words with the same meaning share one concept (this stands in for an embedding model)
+const CONCEPTS = [
+ ['immigration','passport','border','departure-control','passports'],
+ ['counter','counters','desk','desks','booth','booths','lane','lanes'],
+ ['wait','waits','waiting','queue','queues','queuing','line','lines','delay','delays','slow','long'],
+ ['peak','busy','busiest','rush','evening','evenings','17:00'],
+ ['manager','supervisor','duty'],
+ ['minimum','least','required','minimums'],
+ ['open','opened','opens','staffed','rostered'],
+ ['escalate','escalation','level','trigger','action','do'],
+ ['staff','staffing','officers','officer','people','personnel'],
+ ['missed','miss','misses','late'],
+ ['rebooking','rebook','rebooked'],
+ ['smart','gate','gates','automated','e-gate','egate'],
+ ['satisfaction','score','survey','happy'],
+ ['owner','owns','responsible','approved'],
+ ['terminal','t1','t2'],
+ ['passenger','passengers','travellers','travelers','people'],
+ ['maximum','max','exceed','exceeds','limit'],
+ ['baggage','bags','luggage','reclaim'],
+];
+const C = {}; CONCEPTS.forEach((g,i)=>g.forEach(w=>{ if(!C[w]) C[w]='c'+i; }));
+function words(t){ return (t.toLowerCase().match(/[a-z0-9:\-]+/g)||[]); }
+function stem(w){ return w.length>4 ? w.replace(/(ings|ing|ed|es|s)$/,'') : w; }
+function features(t, meaning){
+  const f = {};
+  if(meaning) t = t.replace(/passport control/ig,'immigration');
+  words(t).forEach(w=>{
+    if(STOP.has(w) || /^\d$/.test(w)) return;
+    if(w==='passport' || w==='control') {} // handled below
+    const key = meaning ? (C[w] || C[stem(w)] || stem(w)) : w;
+    f[key] = (f[key]||0)+1;
+  });
+  return f;
+}
+
+/* ---------- chunking (sentence-aware, like SentenceSplitter) ---------- */
+function buildChunks(){
+  const sizeTok = SIZES[S.size], sizeW = Math.max(20, Math.round(sizeTok/1.33)), ovW = Math.round(S.ov/1.33);
+  const chunks = [];
+  DOCS.forEach((d,di)=>{
+    if(!S.docs[di]) return;
+    // sentences = the document's lines (each clause is one line)
+    let sents = [];
+    d.lines.forEach(l=>{ const w=l.split(/\s+/); for(let i=0;i<w.length;i+=sizeW) sents.push(w.slice(i,i+sizeW).join(' ')); });
+    let cur=[], curLen=0, carry='';
+    const push = () => {
+      if(!cur.length) return;
+      chunks.push({doc:di, carry, text:cur.join('\n')});
+      const all = cur.join(' ').split(/\s+/);
+      carry = ovW>0 ? all.slice(-ovW).join(' ') : '';
+      cur=[]; curLen = carry ? carry.split(/\s+/).length : 0;
+    };
+    sents.forEach(s=>{
+      const n = s.split(/\s+/).length;
+      if(curLen + n > sizeW && cur.length) push();
+      cur.push(s); curLen += n;
+    });
+    push();
+  });
+  chunks.forEach((c,i)=>{ c.id=i; c.full=(c.carry? c.carry+' … ':'')+c.text; c.idx = chunks.filter(x=>x.doc===c.doc && x.id<i).length+1; });
+  return chunks;
+}
+
+/* ---------- scoring ---------- */
+function cosine(a,b,idf){
+  let dot=0,na=0,nb=0;
+  for(const k in a){ const w=a[k]*(idf[k]||1); na+=w*w; if(b[k]) dot+=w*b[k]*(idf[k]||1); }
+  for(const k in b){ const w=b[k]*(idf[k]||1); nb+=w*w; }
+  return na&&nb ? dot/Math.sqrt(na*nb) : 0;
+}
+function search(chunks,q){
+  const meaning = S.mode==='meaning';
+  const feats = chunks.map(c=>features(c.full, meaning));
+  const df={}; feats.forEach(f=>Object.keys(f).forEach(k=>df[k]=(df[k]||0)+1));
+  const N=chunks.length, idf={}; for(const k in df) idf[k]=Math.log(1+N/df[k]);
+  const qf = features(q, meaning);
+  let scored;
+  if(meaning){
+    scored = chunks.map((c,i)=>({c, s:Math.min(0.99, cosine(qf,feats[i],idf)*1.35)}));
+  } else {
+    // Ctrl+F style: share of the question's words that appear literally in the chunk
+    const qw = Object.keys(qf);
+    scored = chunks.map((c,i)=>{ const hit = qw.filter(w=>feats[i][w]).length; return {c, s: qw.length? (hit===qw.length? 0.9 : hit/qw.length*0.5) : 0}; });
+    // exact phrase bonus
+    const phrase = (q.toLowerCase().match(/"([^"]+)"/)||[])[1];
+    if(phrase) scored.forEach(x=>{ if(!x.c.full.toLowerCase().includes(phrase)) x.s=0; });
+  }
+  scored.sort((a,b)=>b.s-a.s);
+  return {ranked:scored, qf, idf};
+}
+
+/* ---------- answer (extractive simulation) ---------- */
+function bestSentences(top,q,idf){
+  const meaning = S.mode==='meaning'; const qf = features(q, meaning);
+  const cands=[];
+  top.forEach(({c,s})=>c.text.split('\n').forEach(line=>{
+    if(/^(Status|General International|Supersedes|Section \d)/.test(line) || /\(version/.test(line)) return;
+    const f=features(line,meaning);
+    cands.push({line, doc:c.doc, sc: cosine(qf,f,idf) + s*0.1});
+  }));
+  cands.sort((a,b)=>b.sc-a.sc);
+  return cands;
+}
+
+/* ---------- render ---------- */
+function esc(t){ return t.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+function highlight(text,qf){
+  const meaning = S.mode==='meaning';
+  return esc(text).replace(/[A-Za-z0-9:\-]+/g, w=>{
+    const lw=w.toLowerCase(); if(STOP.has(lw) || /^\d$/.test(lw)) return w;
+    const key = meaning ? (C[lw]||C[stem(lw)]||stem(lw)) : lw;
+    return qf[key] ? '<mark>'+w+'</mark>' : w;
+  });
+}
+function lightPipe(n){ document.querySelectorAll('.stage').forEach((s,i)=>s.classList.toggle('on', i<=n)); }
+
+let chunks=[];
+function rebuild(){
+  chunks = buildChunks();
+  $('vSize').textContent = SIZES[S.size]+' tokens';
+  $('hSize').textContent = SIZES[S.size]<=100 ? 'Small: precise chunks, but a rule may lose its context.' : SIZES[S.size]>=450 ? 'Large: fewer chunks, more context, vaguer search.' : 'Balanced: the setting most teams start with.';
+  $('vOv').textContent = S.ov+' tokens' + (S.ov ? ' ('+Math.round(S.ov/SIZES[S.size]*100)+'%)' : '');
+  $('vK').textContent = S.k;
+  $('sChunks').textContent = chunks.length;
+  const allTok = Math.round(DOCS.reduce((a,d,i)=>a+(S.docs[i]? d.lines.join(' ').split(/\s+/).length:0),0)*1.33);
+  $('sAll').textContent = allTok.toLocaleString();
+  $('mapInfo').textContent = 'one tile = one chunk';
+  run();
+}
+function run(){
+  const q = $('q').value.trim(); S.q=q;
+  const map=$('map'); map.innerHTML='';
+  if(!chunks.length){ $('results').innerHTML='<div class="empty">Select at least one document.</div>'; return; }
+  let res=null, top=[];
+  if(q){ res=search(chunks,q); top=res.ranked.slice(0,S.k).filter(x=>x.s>0); }
+  const hitIds = new Map(top.map((x,i)=>[x.c.id,i+1]));
+  chunks.forEach(c=>{
+    const t=document.createElement('div'); t.className='tile'+(hitIds.has(c.id)?' hit':'');
+    t.style.borderColor=HEX[c.doc]; t.style.color = hitIds.has(c.id)? HEX[c.doc] : 'rgba(255,255,255,.7)';
+    if(hitIds.has(c.id)){ t.style.background=HEX[c.doc]; t.innerHTML='<span style="color:#04101E">#'+hitIds.get(c.id)+'</span>'; }
+    else t.textContent=c.idx;
+    t.title = DOCS[c.doc].code+' · chunk '+c.idx+'\n\n'+c.full.slice(0,260)+'…';
+    map.appendChild(t);
+  });
+  $('legend').innerHTML = DOCS.map((d,i)=>S.docs[i]?`<span><i class="sw" style="background:${HEX[i]}"></i> ${d.code}</span>`:'').join('') + '<span>Glowing = retrieved (#rank)</span>';
+  if(!q){ lightPipe(2); return; }
+  lightPipe(5);
+
+  // results
+  const best = res.ranked[0] ? res.ranked[0].s : 0;
+  $('foundInfo').textContent = `top_k = ${S.k} of ${chunks.length} chunks`;
+  $('results').innerHTML = top.length ? top.map((x,i)=>{
+    const c=x.c, ovHtml = c.carry ? `<span class="ov" title="overlap from the previous chunk">${highlight(c.carry,res.qf)}</span> … ` : '';
+    return `<div class="res" style="animation-delay:${i*90}ms">
+      <div class="meta"><span><span class="rank" style="background:${HEX[c.doc]}">#${i+1}</span> &nbsp;${DOCS[c.doc].code} · chunk ${c.idx}${c.doc===2?' <span class="warn">DRAFT</span>':''}</span><span class="mono">score ${x.s.toFixed(2)}</span></div>
+      <div class="bar"><i style="width:${Math.round(x.s*100)}%"></i></div>
+      <div class="txt">${ovHtml}${highlight(c.text,res.qf).replace(/\n/g,'<br>')}</div></div>`;
+  }).join('') + (res.ranked.length>S.k ? `<div class="note">Next best chunk, NOT sent: ${DOCS[res.ranked[S.k].c.doc].code} · chunk ${res.ranked[S.k].c.idx} (score ${res.ranked[S.k].s.toFixed(2)}). Raise top_k to include it.</div>` : '')
+  : '<div class="empty">No chunk matched at all. In keyword mode the exact words must appear in the text.</div>';
+
+  // prompt
+  const ctx = top.map((x,i)=>`[${i+1}] (${DOCS[x.c.doc].code})\n${x.c.full}`).join('\n\n');
+  const sys = S.rule ? 'You are the Airport Policy Assistant. Answer ONLY from the context below.\nIf the answer is not in the context, say: "I could not find this in the documents."\nCite the document code.' : 'You are the Airport Policy Assistant. Answer the question.';
+  $('prompt').innerHTML = `<span class="k">SYSTEM:</span> ${esc(sys)}\n\n<span class="k">CONTEXT (${top.length} chunks):</span>\n${esc(ctx)||'(nothing retrieved)'}\n\n<span class="k">QUESTION:</span> ${esc(q)}`;
+  const tok = Math.round((sys+ctx+q).split(/\s+/).length*1.33);
+  $('sTok').textContent = tok.toLocaleString();
+
+  // answer
+  const ans=$('answer');
+  const THRESH = S.mode==='meaning' ? 0.15 : 0.35;
+  const key = KEY[norm(q)];
+  const draftRank = top.findIndex(x=>x.c.doc===2)+1;
+  if(key && key.clauses.length){
+    const parts = key.clauses.map(([di,cl])=>{
+      const line = DOCS[di].lines.find(l=>l.startsWith(cl+' '));
+      let state='missing', rank=0;
+      top.forEach((x,r)=>{ if(x.c.doc!==di) return;
+        const flat=x.c.full.replace(/\s+/g,' ');
+        if(flat.includes(line)){ if(state!=='whole'){state='whole';rank=r+1;} }
+        else if(state==='missing' && flat.includes(line.split(' ').slice(0,6).join(' '))){ state='cut'; rank=r+1; } });
+      if(S.mode==='keyword' && best < THRESH) state='missing';
+      return {di,cl,state,rank};
+    });
+    const allWhole = parts.every(p=>p.state==='whole'), anyMiss = parts.some(p=>p.state==='missing'), anyCut=parts.some(p=>p.state==='cut');
+    const list = parts.map(p=>`${DOCS[p.di].code} clause ${p.cl}: ${p.state==='whole'?'retrieved whole at rank #'+p.rank:p.state==='cut'?'only PART of it retrieved (rank #'+p.rank+')':'NOT retrieved'}`).join('<br>');
+    if(allWhole){
+      ans.className='answer'+(draftRank?' risk':'');
+      ans.innerHTML = esc(key.answer)+`<span class="src">${list}</span>`+(draftRank?`<span class="src warn">Careful: the DRAFT chunk was also retrieved (rank #${draftRank}). It says 12 minutes. Without a status rule the model may quote the draft. Index only approved documents.</span>`:'');
+    } else if(anyMiss && !anyCut && parts.every(p=>p.state==='missing')){
+      ans.className='answer risk';
+      ans.innerHTML = (S.rule?'"I could not find this in the documents."':'"A confident guess, not based on our documents."')+`<span class="src warn">The answer IS in the documents, but the chunk was not retrieved, so the model never saw it.</span><span class="src">${list}</span><span class="src">Fix: raise top_k, search by meaning, or change the chunk size.</span>`;
+    } else {
+      ans.className='answer no';
+      ans.innerHTML = 'Partial answer only.'+`<span class="src">${list}</span><span class="src">${anyCut?'The rule was cut across chunks. Raise chunk_size or overlap.':'Part of the answer is missing. Raise top_k so both documents reach the model.'}</span>`;
+    }
+  } else if(best < THRESH || !top.length || (key && !key.clauses.length)){
+    if(S.rule){ ans.className='answer no'; ans.innerHTML='"I could not find this in the documents."<span class="src">The rule prompt stopped a made-up answer. The best chunk scored only '+best.toFixed(2)+'.</span>'; }
+    else { ans.className='answer risk'; ans.innerHTML=(/park/i.test(q)?'"It is usually around 50 to 100 AED per day at most airports."':'"A confident answer built from general knowledge, not from our documents."')+'<span class="src warn">Invented. Nothing in the retrieved chunks supports this. With the rule prompt off, the model fills the gap with a plausible guess.</span>'; }
+  } else {
+    ans.className='answer';
+    ans.innerHTML = `Gemini would write the answer from the ${top.length} chunk${top.length>1?'s':''} on the left.<span class="src">Best match: rank #1, ${DOCS[top[0].c.doc].code} chunk ${top[0].c.idx} (score ${best.toFixed(2)}). Read it: is the answer really there? If not, change top_k or the chunk size.</span>`+(draftRank?`<span class="src warn">A DRAFT chunk was retrieved (rank #${draftRank}). It is not in force.</span>`:'');
+  }
+}
+
+function norm(s){ return s.toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim(); }
+const KEY = {};
+[
+ ['How many counters must be open in Terminal 1 at peak hours?', [[0,'3.2']], '9 departure immigration counters in Terminal 1 during peak hours (17:00 to 22:59), and 5 in Terminal 2.'],
+ ['What is the maximum average wait for departure immigration?', [[0,'2.3']], 'The average departure immigration wait must not exceed 15 minutes, and no more than 5% of passengers may wait over 30 minutes in a peak hour.'],
+ ['Why do passengers wait so long at passport control?', [[0,'2.3']], 'The documents do not explain why, but they set the limit: the average departure immigration wait must not exceed 15 minutes. Semantic search matched "passport control" to "departure immigration".'],
+ ['What happens when the wait goes above 20 minutes?', [[1,'2.1']], 'Level 1: the duty manager opens any reserve counters in that terminal and informs the border supervisor.'],
+ ['When do smart gates operate?', [[1,'4.1']], 'Smart gates operate at Terminal 1 departures from 1 July 2026. Use is voluntary.'],
+ ['What must the duty manager do when the wait is above 30 minutes for 3 hours?', [[0,'3.3'],[1,'2.2']], 'Request additional border staff immediately, record the incident, and notify the Director, Airport Operations (Level 2).'],
+ ['What is the daily parking tariff at the airport?', [], ''],
+].forEach(([q,cl,a])=>KEY[norm(q)]={clauses:cl,answer:a});
+
+/* ---------- experiments ---------- */
+const EXPS = [
+ ['The basic question','Ask how many counters must be open at peak. Which document and clause answer it?', ()=>set({q:'How many counters must be open in Terminal 1 at peak hours?'})],
+ ['Not in the documents','Ask about the parking tariff. Then switch the rule prompt OFF and ask again.', ()=>set({q:'What is the daily parking tariff at the airport?'})],
+ ['Meaning vs keywords','Ask about "passport control" with Meaning, then with Keywords. The documents never say "passport control".', ()=>set({q:'Why do passengers wait so long at passport control?'})],
+ ['top_k too small','Set top_k to 1 and ask what happens above 30 minutes for 3 hours. Two documents hold the answer.', ()=>set({q:'What must the duty manager do when the wait is above 30 minutes for 3 hours?', k:1})],
+ ['Tiny chunks','Set chunk_size to 50 and overlap to 0. Now 30+ small chunks compete. Does the right clause still make the top 3?', ()=>set({q:'What is the maximum average wait for departure immigration?', size:0, ov:0})],
+ ['The draft trap','Tick the DRAFT document, set top_k to 4 and ask for the maximum immigration wait. The draft says 12, the approved policy says 15. Which reaches the model?', ()=>set({q:'What is the maximum average wait for departure immigration?', docs:[true,true,true], k:4})],
+];
+function set(o){
+  o = Object.assign({k:3,size:3,ov:30,docs:[true,true,false]}, o);
+  if(o.q!==undefined) $('q').value=o.q;
+  if(o.k!==undefined){ S.k=o.k; $('k').value=o.k; }
+  if(o.size!==undefined){ S.size=o.size; $('size').value=o.size; }
+  if(o.ov!==undefined){ S.ov=o.ov; $('ov').value=o.ov; }
+  if(o.docs){ S.docs=o.docs; renderDocs(); }
+  rebuild();
+}
+$('exps').innerHTML = EXPS.map((e,i)=>`<div class="exp"><span class="n">0${i+1}</span><p><b>${e[0]}</b><em>${e[1]}</em></p><button data-i="${i}">Load</button></div>`).join('');
+$('exps').onclick = e=>{ const b=e.target.closest('button'); if(b) EXPS[+b.dataset.i][2](); };
+
+/* ---------- wiring ---------- */
+function renderDocs(){
+  $('docList').innerHTML = DOCS.map((d,i)=>`<label class="row"><input type="checkbox" data-d="${i}" ${S.docs[i]?'checked':''}><i class="sw" style="background:${HEX[i]}"></i><span><b>${d.code}</b><br><span style="color:var(--mute);font-size:14px">${d.label}</span></span></label>`).join('');
+}
+renderDocs();
+$('docList').onchange = e=>{ const i=+e.target.dataset.d; S.docs[i]=e.target.checked; rebuild(); };
+const CHIPS=['How many counters must be open in Terminal 1 at peak hours?','What is the maximum average wait for departure immigration?','Why do passengers wait so long at passport control?','What happens when the wait goes above 20 minutes?','When do smart gates operate?','What is the daily parking tariff at the airport?'];
+$('chips').innerHTML = CHIPS.map(c=>`<button class="chip">${c}</button>`).join('');
+$('chips').onclick = e=>{ if(e.target.classList.contains('chip')){ $('q').value=e.target.textContent; run(); } };
+$('go').onclick = run;
+$('q').onkeydown = e=>{ if(e.key==='Enter') run(); };
+$('size').oninput = e=>{ S.size=+e.target.value; rebuild(); };
+$('ov').oninput = e=>{ S.ov=+e.target.value; rebuild(); };
+$('k').oninput = e=>{ S.k=+e.target.value; rebuild(); };
+$('mode').onclick = e=>{ const b=e.target.closest('button'); if(!b) return; S.mode=b.dataset.m; [...$('mode').children].forEach(x=>x.classList.toggle('on',x===b)); run(); };
+$('rule').onclick = e=>{ const b=e.target.closest('button'); if(!b) return; S.rule=b.dataset.r==='1'; [...$('rule').children].forEach(x=>x.classList.toggle('on',x===b)); run(); };
+rebuild();
+})();
+</script>
+</body>
+</html>
