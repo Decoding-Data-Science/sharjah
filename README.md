@@ -5,6 +5,8 @@
 
 https://decoding-data-science.github.io/sharjah/prompt-engineering-guide.html#five
 
+https://decoding-data-science.github.io/sharjah/rag_play_lab.html
+
 **Individual assessments**
 
 https://forms.gle/SLs9ksmtvqWjK6276
