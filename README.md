@@ -15,6 +15,10 @@ https://forms.gle/SLs9ksmtvqWjK6276
 
 https://forms.gle/rVEAjVAQd4uNjPE48
 
+**Sample prompt to improve gradio after final step**
+
+Okay, so I want to focus on airport queue staffing systems. So I want you to analyze the whole context on the top and create me a whole code or a plan to create the different tools and the SQL tool and the system prompt to focus on airport staff. Can you repeat that? Airport queue and staff assistance. So the main focus is to have an agent that helps us in staff rosters, allotment, management, and all those things. So if the Gradio app that you are building, can you please focus more on that specific aspect and create the logo, the tables, the FAQs, the headers, if you can create a status button, like green, red, yellow, a forecasting, a graph of the days that we have. So if you can create me a full nice application along with some numbers that I can showcase as a demo, it will be great.
+
 A practical introduction to **data analytics, generative AI, document understanding, and AI-assisted workflows** using **Google Colab and the Gemini API**. The exercises follow a fictional airport operations case study known as **“The Friday Problem.”**
 
 > **Workshop safety:** All sample data and policies are fictional. Do not upload real passenger, employee, organizational, or otherwise confidential information to AI tools. Store API keys in Google Colab Secrets—not in code or this repository.
