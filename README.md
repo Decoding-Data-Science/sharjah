@@ -7,11 +7,11 @@ https://decoding-data-science.github.io/sharjah/prompt-engineering-guide.html#fi
 
 https://decoding-data-science.github.io/sharjah/rag_play_lab.html
 
-**Individual assessments**
+**Individual Survey**
 
 [https://forms.gle/SLs9ksmtvqWjK6276](https://forms.gle/rVEAjVAQd4uNjPE48)
 
-**Team Assessments**
+**Team Capstone Submission**
 
 https://forms.gle/9FcgqLh6zFyW4ZgF8
 
