@@ -9,11 +9,13 @@ https://decoding-data-science.github.io/sharjah/rag_play_lab.html
 
 **Individual assessments**
 
-https://forms.gle/SLs9ksmtvqWjK6276
+[https://forms.gle/SLs9ksmtvqWjK6276](https://forms.gle/rVEAjVAQd4uNjPE48)
 
 **Team Assessments**
 
-https://forms.gle/rVEAjVAQd4uNjPE48
+https://forms.gle/9FcgqLh6zFyW4ZgF8
+
+
 
 **Sample prompt to improve gradio after final step**
 
