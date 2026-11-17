@@ -15,6 +15,9 @@ https://decoding-data-science.github.io/sharjah/rag_play_lab.html
 
 https://forms.gle/9FcgqLh6zFyW4ZgF8
 
+**DAY 2 RAG Sample prompt to improve gradio after final step**
+
+So please, for the above Gradio— everyone please listen to me, right? For the above Gradio application, please make it more professional. Use the same logic, don't change the logic. Only make sure that you are changing the Gradio component, making it more professional. Use the package Gradio 6.31.0. Make sure whatever settings you are giving, make it for Gradio 3.1.0. What else we can do here? Try to centrally align our title. Customize this for the team. What's your team name? AI Vision. Add relevant logo. Make two-column layout. Add FAQ on the left side. Make it more professional. Add layouts, blocks, borders. And what else? Anything more? Add icons where required. Anything else to make it beautiful? Add background images as relevant. Anything else? How to make it better? The Gradio? Okay, let us try to do this much, and make sure that you are using the same logic and function. Don't change anything.
 
 
 **Sample prompt to improve gradio after final step**
