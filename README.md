@@ -24,6 +24,10 @@ So please, for the above Gradio— everyone please listen to me, right? For the 
 
 Can you please help me make the above Gradio application professional? Make sure you are doing all the changes in 6.31.0 Gradio version. Please don't use any features like button features and copy features that are there in the old Gradio. Please make two layouts. Put the logo. Please design it for the team Desert Dragons. Keep a relevant logo, keep a relevant design feature. Please add relevant numbers, dashboards, or important views. Add a status symbol like red, green, yellow, just for us to have a good view. Add FAQ questions. Add borders, layouts. Make it more interesting, professional, and make sure that you don't change any logic. Only use the logic that is there inside the Gradio. Also try to make it something similar to how the ChatGPT interface looks like, with the logo should be on the left side, and the team name Desert Dragon should be shown as well, and add relevant icons where required.
 
+**Day 3 Focus on team use case**
+
+So now I need to create a focused Gradio application based on the above that you have built, focusing on customer feedback analysis. So have one tab for the agent, whatever you have built, FAQs, which is a little bit focused and specialized on customer feedback data. Second tab, please add some metrics, some KPIs that show about the feedbacks, like what are the top segments. If you can give me some monthly important dashboards and KPIs that are there inside the agent within a new tab. So please add it and convert this specific general agent to the agent that is focused on the above details and also give me some good, important metrics dashboard-related graphs that is very helpful for the person who logs in. use the same gadio vesion just add extra features as discussed above
+
 ## Intro
 
 A practical introduction to **data analytics, generative AI, document understanding, and AI-assisted workflows** using **Google Colab and the Gemini API**. The exercises follow a fictional airport operations case study known as **“The Friday Problem.”**
